@@ -9,7 +9,15 @@
 | -------------------------------------------------------------------------------------------------------------------------------------- | --------------- | --------------- |
 | [ <img src="https://raw.githubusercontent.com/Solana-Workshops/.github/main/.docs/youtube-icon.png" alt="youtube" width="20" align="center"/> Recording](https://www.youtube.com/watch?v=_XBvEHwSqJc) | Jonas Hahn | Twitch stream |
 
+## 👾 Vercel Demo
+
 <a href="https://tug-of-war.vercel.app/">Live Version Main Net</a>
+
+## ☄️ Open in Solana Playground IDE
+| Program | Link |
+| -------------------- | --------------------------------------- |
+| Hello World | [ ![program](https://ik.imagekit.io/mkpjlhtny/solpg_button_zWM8WlPKs.svg?ik-sdk-version=javascript-1.4.3&updatedAt=1662621556513)](  https://beta.solpg.io/github/https://github.com/Solana-Workshops/tug-of-war-solana-pay/tree/main/program) |
+
 
 ## Controling a game on a big screen using Solana Pay QR codes? How?!
 
