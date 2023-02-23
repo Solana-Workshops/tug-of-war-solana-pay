@@ -16,7 +16,7 @@
 ## ☄️ Open in Solana Playground IDE
 | Program | Link |
 | -------------------- | --------------------------------------- |
-| Hello World | [ ![program](https://ik.imagekit.io/mkpjlhtny/solpg_button_zWM8WlPKs.svg?ik-sdk-version=javascript-1.4.3&updatedAt=1662621556513)](  https://beta.solpg.io/github/https://github.com/Solana-Workshops/tug-of-war-solana-pay/tree/main/program) |
+| Program | [ ![program](https://ik.imagekit.io/mkpjlhtny/solpg_button_zWM8WlPKs.svg?ik-sdk-version=javascript-1.4.3&updatedAt=1662621556513)](  https://beta.solpg.io/github/https://github.com/Solana-Workshops/tug-of-war-solana-pay/tree/main/program) |
 
 
 ## Controling a game on a big screen using Solana Pay QR codes? How?!
