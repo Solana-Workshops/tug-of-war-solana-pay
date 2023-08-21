@@ -3,6 +3,7 @@ import { FC, useEffect, useRef } from 'react';
 
 type TransactionRequestQRProps = {
   instruction: string;
+  network: string;
 };
 
 const queryBuilder = (baseUrl: string, params: string[][]) => {
@@ -13,7 +14,7 @@ const queryBuilder = (baseUrl: string, params: string[][]) => {
 }
 
 const PayQR: FC<TransactionRequestQRProps> = (
-  { instruction }
+  { instruction, network }
 ) => {
   const qrRef = useRef<HTMLDivElement>(null)
 
@@ -21,6 +22,7 @@ const PayQR: FC<TransactionRequestQRProps> = (
     const params = [
       ['amount', (0.001).toString()],
       ['instruction', instruction],
+      ['network', network],
     ];
 
     const apiUrl = queryBuilder(

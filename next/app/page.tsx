@@ -1,25 +1,40 @@
 'use client'; // this makes next know that this page should be rendered in the client
 import { useEffect, useState } from 'react';
-import { CONNECTION } from '@/src/util/const';
 import { GameDataAccount, getGameData, getGameDataAccountPublicKey, getChestAccountPublicKey, createRestartInstruction, createInitializeInstruction, createPullRightInstruction, createPullLeftInstruction } from '@/src/util/move';
 import PayQR from '@/src/components/PayQR';
 import {
   WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
-import {  Transaction, } from '@solana/web3.js';
+import {  Connection, Transaction, } from '@solana/web3.js';
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useSearchParams } from 'next/navigation'
 
 export default function Home() {
   const [gameDataState, setGameDataState] = useState<GameDataAccount>()
   const [currentPlayerPosition, setCurrentPlayerPosition] = useState<number>();
   const [chestLamports, setChestLamports] = useState<number>();
   const [playerDisplay, setPlayerDisplay] = useState<string>();
-  const { connection } = useConnection();
+  const [network, setNetwork] = useState<string>("mainnet");
   const { publicKey, sendTransaction } = useWallet();
+  const searchParams = useSearchParams()  
+ 
+  let CONNECTION = new Connection('https://light-red-uranium.solana-mainnet.quiknode.pro/9d63f34cfe3e6e00543a34ff3f19855e537f0a99/',  {
+        wsEndpoint: "wss://light-red-uranium.solana-mainnet.quiknode.pro/9d63f34cfe3e6e00543a34ff3f19855e537f0a99/",
+        commitment: 'processed' 
+      });
 
   let counter = 0;
 
   useEffect(() => {
+
+    if (searchParams.get('network') == "devnet") {
+      setNetwork("devnet");
+      CONNECTION = new Connection(process.env.NEXT_PUBLIC_RPC ? process.env.NEXT_PUBLIC_RPC : 'https://api.devnet.solana.com',  {
+        wsEndpoint: process.env.NEXT_PUBLIC_WSS_RPC ? process.env.NEXT_PUBLIC_WSS_RPC : "wss://api.devnet.solana.com",
+        commitment: 'confirmed' 
+      });
+      console.log("Switch to devent: " + searchParams.get('network'));
+    }
 
     // A little animation for the player bubbles
     setInterval(() => {
@@ -67,7 +82,7 @@ export default function Home() {
     // Get the initial chest lamports
     const getChestLamportsAsync = async () => {
       const chestPublicKey = getChestAccountPublicKey();
-      const accountInfo = await connection.getAccountInfo(chestPublicKey);
+      const accountInfo = await CONNECTION.getAccountInfo(chestPublicKey);
       setChestLamports(accountInfo?.lamports);
     };
 
@@ -125,8 +140,8 @@ export default function Home() {
      console.log("Invalid instruction");
     }
 
-    const signature = await sendTransaction(transaction, connection);
-    await connection.confirmTransaction(signature, "processed");
+    const signature = await sendTransaction(transaction, CONNECTION);
+    await CONNECTION.confirmTransaction(signature, "processed");
   }
 
   return (
@@ -206,19 +221,19 @@ export default function Home() {
             <li className='flex flex-row justify-between mx-10 text-xl my-4'>
 
               {currentPlayerPosition != null && (currentPlayerPosition > 0 && currentPlayerPosition < 20) && (
-                <PayQR instruction={"pull_left"} />
+                <PayQR instruction={"pull_left"} network={network}/>
               )}
 
               {currentPlayerPosition != null && (currentPlayerPosition > 0 && currentPlayerPosition < 20) && (
-                <PayQR instruction={"pull_right"} />
+                <PayQR instruction={"pull_right"} network={network}/>
               )}
 
               {!gameDataState && (
-                <PayQR instruction={"initialize"} />
+                <PayQR instruction={"initialize"} network={network}/>
               )}
 
               {currentPlayerPosition != null && gameDataState != null && (currentPlayerPosition <= 0 || currentPlayerPosition >= 20) && (
-                <PayQR instruction={"restart"} />
+                <PayQR instruction={"restart"} network={network}/>
               )}
             </li>
           </div>
