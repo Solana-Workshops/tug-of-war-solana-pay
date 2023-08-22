@@ -1,16 +1,20 @@
 'use client'; // this makes next know that this page should be rendered in the client
 import { useEffect, useState } from 'react';
-import { GameDataAccount, getGameData, getGameDataAccountPublicKey, getChestAccountPublicKey, createRestartInstruction, createInitializeInstruction, createPullRightInstruction, createPullLeftInstruction } from '@/src/util/move';
+import { getGameDataAccountPDA, getChestAccountPDA } from '@/src/util/utils';
 import PayQR from '@/src/components/PayQR';
 import {
   WalletMultiButton
 } from '@solana/wallet-adapter-react-ui';
 import {  Connection, Transaction, } from '@solana/web3.js';
-import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { useWallet } from "@solana/wallet-adapter-react";
 import { useSearchParams } from 'next/navigation'
+import { IDL, TugOfWar } from "../pages/api/tug_of_war";
+import { Program } from '@coral-xyz/anchor';
+import { GetConnection, TUG_OF_WAR_PROGRAM_ID } from '@/src/util/const';
+import { AddInitializeInstruction, AddPullLeftInstruction, AddPullRightInstruction, AddRestartInstruction } from '@/pages/api/transaction';
 
 export default function Home() {
-  const [gameDataState, setGameDataState] = useState<GameDataAccount>()
+  const [gameDataState, setGameDataState] = useState<any>()
   const [currentPlayerPosition, setCurrentPlayerPosition] = useState<number>();
   const [chestLamports, setChestLamports] = useState<number>();
   const [playerDisplay, setPlayerDisplay] = useState<string>();
@@ -18,23 +22,18 @@ export default function Home() {
   const { publicKey, sendTransaction } = useWallet();
   const searchParams = useSearchParams()  
  
-  let CONNECTION = new Connection('https://light-red-uranium.solana-mainnet.quiknode.pro/9d63f34cfe3e6e00543a34ff3f19855e537f0a99/',  {
-        wsEndpoint: "wss://light-red-uranium.solana-mainnet.quiknode.pro/9d63f34cfe3e6e00543a34ff3f19855e537f0a99/",
-        commitment: 'processed' 
-      });
+  let CONNECTION: Connection;
+  let TUG_OF_WAR_PROGRAM: Program<TugOfWar>;
 
   let counter = 0;
 
   useEffect(() => {
 
-    if (searchParams.get('network') == "devnet") {
-      setNetwork("devnet");
-      CONNECTION = new Connection(process.env.NEXT_PUBLIC_RPC ? process.env.NEXT_PUBLIC_RPC : 'https://api.devnet.solana.com',  {
-        wsEndpoint: process.env.NEXT_PUBLIC_WSS_RPC ? process.env.NEXT_PUBLIC_WSS_RPC : "wss://api.devnet.solana.com",
-        commitment: 'confirmed' 
-      });
-      console.log("Switch to devent: " + searchParams.get('network'));
-    }
+    let CONNECTION: Connection = GetConnection(searchParams.get('network') == "devnet" ? "devnet" : "mainnet");
+
+    searchParams.get('network') == "devnet" ? setNetwork("devnet") : setNetwork("mainnet");
+
+    TUG_OF_WAR_PROGRAM = new Program<TugOfWar>(IDL, TUG_OF_WAR_PROGRAM_ID, { connection: CONNECTION })
 
     // A little animation for the player bubbles
     setInterval(() => {
@@ -42,21 +41,25 @@ export default function Home() {
     }, 1300);
 
     // Listen for changes to the game data account
-    const gameDataAccountPublicKey = getGameDataAccountPublicKey();
+    const gameDataAccountPublicKey = getGameDataAccountPDA();
     CONNECTION.onAccountChange(
       gameDataAccountPublicKey,
       (updatedAccountInfo, context) => {
         {
-          const gameDataParsed = GameDataAccount.fromBuffer(updatedAccountInfo.data);
-          setGameDataState(gameDataParsed);
-          setCurrentPlayerPosition(gameDataParsed.playerPosition);
+          const decoded = TUG_OF_WAR_PROGRAM.coder.accounts.decode(
+            "gameDataAccount",
+            updatedAccountInfo.data
+          )
+          console.log(JSON.stringify(decoded));
+          setGameDataState(decoded);
+          setCurrentPlayerPosition(decoded.playerPosition);
         }
       },
       "confirmed"
     );
 
     // Listen for changes to the chest account
-    const chestAccountPublicKey = getChestAccountPublicKey();
+    const chestAccountPublicKey = getChestAccountPDA();
     CONNECTION.onAccountChange(
       chestAccountPublicKey,
       (updatedAccountInfo, context) => {
@@ -69,10 +72,10 @@ export default function Home() {
 
     // Get the initial game data
     const getGameDataAsync = async () => {
-      const gameDataAccountPublicKey = getGameDataAccountPublicKey();
+      const gameDataAccountPublicKey = getGameDataAccountPDA();
       console.log(gameDataAccountPublicKey);
-      const gameData = await getGameData(
-        CONNECTION,
+      
+      const gameData = await TUG_OF_WAR_PROGRAM.account.gameDataAccount.fetch(
         gameDataAccountPublicKey,
       );
       setGameDataState(gameData);
@@ -81,7 +84,7 @@ export default function Home() {
 
     // Get the initial chest lamports
     const getChestLamportsAsync = async () => {
-      const chestPublicKey = getChestAccountPublicKey();
+      const chestPublicKey = getChestAccountPDA();
       const accountInfo = await CONNECTION.getAccountInfo(chestPublicKey);
       setChestLamports(accountInfo?.lamports);
     };
@@ -129,13 +132,13 @@ export default function Home() {
     transaction.recentBlockhash = latestBlockhash.blockhash;
 
     if (instruction == "pull_left") {
-      transaction.add(await createPullLeftInstruction(publicKey));
+      AddPullLeftInstruction(TUG_OF_WAR_PROGRAM, publicKey, transaction);
     } else if (instruction == "pull_right") {
-      transaction.add(await createPullRightInstruction(publicKey));
+      AddPullRightInstruction(TUG_OF_WAR_PROGRAM, publicKey, transaction);
     } else if (instruction == "initialize") {
-      transaction.add(await createInitializeInstruction(publicKey));
+      AddInitializeInstruction(TUG_OF_WAR_PROGRAM, publicKey, transaction);
     } else if (instruction == "restart") {
-      transaction.add(await createRestartInstruction(publicKey));
+      AddRestartInstruction(TUG_OF_WAR_PROGRAM, publicKey, transaction);
     } else {
      console.log("Invalid instruction");
     }
@@ -211,7 +214,7 @@ export default function Home() {
                       '18': GetLeftPulls() + "__________________" + playerDisplay + "__" + GetRightPulls(),
                       '19': GetLeftPulls() + "___________________" + playerDisplay + "_" + GetRightPulls(),
                       '20': GetLeftPulls() + "____________________ooo-------|-------\\o/",
-                    }[gameDataState ? gameDataState.playerPosition : 10]
+                    }[gameDataState ? gameDataState.playerPosition as number : 10]
                   }
                 </h2>
 
