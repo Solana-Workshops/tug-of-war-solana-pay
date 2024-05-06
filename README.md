@@ -9,6 +9,7 @@
 | -------------------------------------------------------------------------------------------------------------------------------------- | --------------- | --------------- |
 | [ <img src="https://raw.githubusercontent.com/Solana-Workshops/.github/main/.docs/youtube-icon.png" alt="youtube" width="20" align="center"/> Recording](https://www.youtube.com/watch?v=_XBvEHwSqJc) | Jonas Hahn | Twitch stream |
 
+[Live Version Dev Net](https://tug-of-war-solana-pay.vercel.app/?network=devnet)
 <a href="https://tug-of-war.vercel.app/">Live Version Main Net</a>
 
 ## Controling a game on a big screen using Solana Pay QR codes? How?!
